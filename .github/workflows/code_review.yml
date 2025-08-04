@@ -39,9 +39,11 @@ jobs:
     - name: Upload Gemini Review Result
       id: review_result
       run: |
-        echo "REVIEW_RESULT<<EOF" >> $GITHUB_OUTPUT
-        cat review_output.txt >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "REVIEW_RESULT<<EOF"
+            cat review_output.txt | sed 's/^>>/  /'
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
     - name: Post Gemini Review Comment
       uses: actions/github-script@v6
