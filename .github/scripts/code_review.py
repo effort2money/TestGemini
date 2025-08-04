@@ -22,7 +22,9 @@ LISTMODELS_URL = f"https://generativelanguage.googleapis.com/v1/models?key={API_
 
 def load_diff():
     try:
-        return open("diff.txt", "r", encoding="utf-8").read()
+        content = open("diff.txt", "r", encoding="utf-8").read()
+        print("🧾 diff.txt 内容预览:\n", content[:500])  # 最多打印前 500 字符
+        return content
     except FileNotFoundError:
         print("⚠️ Warning: diff.txt not found — 跳过审核（默认通过）")
         return ""
