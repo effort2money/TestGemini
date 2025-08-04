@@ -38,8 +38,14 @@ OK: 无致命错误
             "contents": [{"parts": [{"text": prompt}]}]
         }
     )
-
-    return response.json()["candidates"][0]["content"]["parts"][0]["text"]
+    try:
+        result = response.json()
+        print("🔍 Gemini API Raw Response:", result)  # 打印响应内容
+        return result["candidates"][0]["content"]["parts"][0]["text"]
+    except Exception as e:
+        print("❌ Gemini 响应解析失败:", e)
+        print("📦 响应内容:", response.text)
+        raise
 
 def main():
     diff = load_diff()
