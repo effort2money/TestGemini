@@ -109,15 +109,22 @@ OK: 无致命错误
     return parts[0].get("text", "")
 
 def main():
-    diff_txt = load_diff()
-    result = review_code(diff_txt)
-    print("\n📝 Gemini Review Result:")
-    print(result)
+    diff = load_diff()
+    if not diff.strip():
+        print("📭 diff.txt is empty. Skipping review.")
+        result = "OK: 无致命错误\n建议: 没有检测到任何变更，跳过审查。"
+    else:
+        result = review_code(diff)
+
+    print("📝 Gemini Review Result:\n", result)
+    with open("review_output.txt", "w", encoding="utf-8") as f:
+        f.write(result)
+
     if "FATAL" in result.splitlines()[0]:
         print("❌ 检测到致命错误，终止流程。")
         sys.exit(1)
     else:
         print("✅ 无致命错误，允许推送。")
-
+        
 if __name__ == "__main__":
     main()
