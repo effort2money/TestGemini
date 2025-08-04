@@ -13,7 +13,7 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v3
       with:
-        fetch-depth: 0  # ✅ 拉取完整提交历史，允许使用 HEAD^ 等语法
+        fetch-depth: 0
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -26,12 +26,43 @@ jobs:
     - name: Get git diff
       id: diff
       run: |
-        git diff HEAD^ > diff.txt
+        git diff HEAD^ > diff.txt || echo "" > diff.txt
         cat diff.txt
 
-    - name: Call Gemini Pro 2.5 for Code Review
+    - name: Run Gemini Code Review
       id: gemini
       env:
-        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}  # ✅ 注入环境变量
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: |
         python .github/scripts/code_review.py
+
+    - name: Upload Gemini Review Result
+      id: review_result
+      run: |
+        echo "REVIEW_RESULT<<EOF" >> $GITHUB_OUTPUT
+        cat review_output.txt >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Post Gemini Review Comment
+      uses: actions/github-script@v6
+      env:
+        GEMINI_REVIEW_RESULT: ${{ steps.review_result.outputs.REVIEW_RESULT }}
+      with:
+        script: |
+          const body = process.env.GEMINI_REVIEW_RESULT || "未能获取审查结果";
+          const pr = context.payload.pull_request;
+          if (pr) {
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body
+            });
+          } else {
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body
+            });
+          }
