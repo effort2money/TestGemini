@@ -36,9 +36,15 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             BASE_REF="${{ github.base_ref }}"
             HEAD_REF="${{ github.head_ref }}"
-            git fetch origin "$BASE_REF":"origin/$BASE_REF"
-            git fetch origin "$HEAD_REF":"origin/$HEAD_REF"
-            git diff "origin/$BASE_REF" "origin/$HEAD_REF" --no-color > changes.diff
+
+            # 确保分支存在
+            if git show-ref --verify --quiet "refs/remotes/origin/$BASE_REF" && git show-ref --verify --quiet "refs/remotes/origin/$HEAD_REF"; then
+              git fetch origin "$BASE_REF":"origin/$BASE_REF"
+              git fetch origin "$HEAD_REF":"origin/$HEAD_REF"
+              git diff "origin/$BASE_REF" "origin/$HEAD_REF" --no-color > changes.diff
+            else
+              echo "无法找到基准分支或头部分支，跳过 diff 生成。" > changes.diff
+            fi
           else
             # push 事件，确保有两个提交可比较
             if [ $(git rev-list --count HEAD) -ge 2 ]; then
