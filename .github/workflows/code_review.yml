@@ -12,6 +12,8 @@ jobs:
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # ✅ 拉取完整提交历史，允许使用 HEAD^ 等语法
 
     - name: Set up Python
       uses: actions/setup-python@v4
