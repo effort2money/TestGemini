@@ -33,16 +33,17 @@ jobs:
       - name: Get Code Diff
         id: get_diff
         run: |
-          # 从GitHub事件上下文中获取基准分支和头部分支
-          BASE_REF="${{ github.base_ref }}"
-          HEAD_REF="${{ github.head_ref }}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_REF="${{ github.base_ref }}"
+            HEAD_REF="${{ github.head_ref }}"
+            git fetch origin "$BASE_REF":"origin/$BASE_REF"
+            git fetch origin "$HEAD_REF":"origin/$HEAD_REF"
+            git diff "origin/$BASE_REF" "origin/$HEAD_REF" --no-color > changes.diff
+          else
+            # push 事件，比较当前分支最近两次提交
+            git diff HEAD^ HEAD --no-color > changes.diff
+          fi
 
-          # 使用git diff命令生成差异，并将其保存到临时文件
-          # --no-color 移除颜色代码，确保纯文本输出
-          git diff "origin/$BASE_REF" "origin/$HEAD_REF" --no-color > changes.diff
-
-          # 将文件内容读入一个变量，并设置为GitHub Actions的输出变量
-          # 'EOF' 是一个heredoc标记，用于处理多行文本
           echo "diff_content<<EOF" >> $GITHUB_OUTPUT
           cat changes.diff >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
