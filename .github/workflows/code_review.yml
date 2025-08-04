@@ -24,10 +24,12 @@ jobs:
     - name: Get git diff
       id: diff
       run: |
-        git fetch origin main
-        git diff origin/main...HEAD > diff.txt
+        git fetch origin main || true
+        git diff origin/main...HEAD > diff.txt || true
 
     - name: Call Gemini Pro 2.5 for Code Review
       id: gemini
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}  # ✅ 注入环境变量
       run: |
         python .github/scripts/code_review.py
