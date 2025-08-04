@@ -24,8 +24,8 @@ jobs:
     - name: Get git diff
       id: diff
       run: |
-        git fetch origin main || true
-        git diff origin/main...HEAD > diff.txt || true
+        git diff HEAD^ > diff.txt
+        cat diff.txt
 
     - name: Call Gemini Pro 2.5 for Code Review
       id: gemini
