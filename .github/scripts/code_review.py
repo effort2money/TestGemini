@@ -4,6 +4,7 @@
 import os
 import sys
 import json
+import time
 import requests
 
 API_KEY = os.getenv("GEMINI_API_KEY")
@@ -77,7 +78,13 @@ OK: 无致命错误
         }
     }
 
-    resp = requests.post(GENERATE_URL, json=body)
+    for attempt in range(3):
+        resp = requests.post(GENERATE_URL, json=body)
+        if resp.status_code == 500:
+            print(f"⚠️ 第 {attempt+1} 次尝试失败，重试中...")
+            time.sleep(2)
+            continue
+        break
     try:
         resp.raise_for_status()
     except Exception:
