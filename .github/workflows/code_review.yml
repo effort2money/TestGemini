@@ -1,0 +1,33 @@
+name: AI Code Review with Gemini Pro 2.5
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: pip install requests
+
+    - name: Get git diff
+      id: diff
+      run: |
+        git fetch origin main
+        git diff origin/main...HEAD > diff.txt
+
+    - name: Call Gemini Pro 2.5 for Code Review
+      id: gemini
+      run: |
+        python .github/scripts/code_review.py
