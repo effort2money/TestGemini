@@ -26,5 +26,14 @@ int main() {
     int result = factorial(-5);
     cout << "Factorial: " << result << endl;
 
+    int* ptr = new int[10];
+    // ❌ 错误：未释放内存
+    // delete[] ptr;  // 如果取消注释，将修复内存泄漏
+
+    int zero = 0;
+    // ❌ 错误：除以零将导致未定义行为
+    int division = 10 / zero;  // ❌ 不安全：除以零
+    cout << "Division result: " << division << endl;
+
     return 0;
 }
