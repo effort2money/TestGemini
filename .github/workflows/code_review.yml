@@ -35,6 +35,7 @@ jobs:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: |
         python .github/scripts/code_review.py
+      continue-on-error: true
 
     - name: Debug review_output.txt 内容
       run: |
@@ -48,11 +49,7 @@ jobs:
       id: review_result
       run: |
         if [ ! -f review_output.txt ]; then echo "未生成审查结果" > review_output.txt; fi
-        {
-          echo "REVIEW_RESULT<<EOF"
-          cat review_output.txt
-          echo "EOF"
-        } >> $GITHUB_OUTPUT
+        printf "REVIEW_RESULT<<EOF\n%s\nEOF\n" "$(cat review_output.txt)" >> $GITHUB_OUTPUT
 
     - name: Post Gemini Review Comment
       uses: actions/github-script@v6
