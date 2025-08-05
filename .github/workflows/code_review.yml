@@ -36,12 +36,23 @@ jobs:
       run: |
         python .github/scripts/code_review.py
 
+    - name: Debug review_output.txt 内容
+      run: |
+        echo "===== review_output.txt 内容（cat） ====="
+        cat review_output.txt || echo "文件不存在"
+        echo "===== review_output.txt 内容（十六进制） ====="
+        xxd review_output.txt || echo "文件不存在"
+        echo "===== review_output.txt 结尾字符（od） ====="
+        od -c review_output.txt | tail -n 10 || echo "文件不存在"
     - name: Upload Gemini Review Result
       id: review_result
       run: |
         if [ ! -f review_output.txt ]; then echo "未生成审查结果" > review_output.txt; fi
-        REVIEW_RESULT="$(cat review_output.txt)"
-        echo "REVIEW_RESULT=${REVIEW_RESULT}" >> $GITHUB_OUTPUT
+        {
+          echo "REVIEW_RESULT<<EOF"
+          cat review_output.txt
+          echo "EOF"
+        } >> $GITHUB_OUTPUT
 
     - name: Post Gemini Review Comment
       uses: actions/github-script@v6
