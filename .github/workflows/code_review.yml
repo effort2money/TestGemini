@@ -12,7 +12,7 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v3
       with:
-        fetch-depth: 2
+        fetch-depth: 0
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -22,41 +22,51 @@ jobs:
     - name: Install dependencies
       run: pip install requests
 
-    - name: Get git diff
-      id: diff
+    - name: Get diff
       run: |
-        git fetch origin main
-        git diff origin/main...HEAD > diff.txt || echo "" > diff.txt
+        git diff origin/${{ github.base_ref }}...HEAD > diff.txt || echo "" > diff.txt
+        cat diff.txt
 
     - name: Run Gemini Code Review
-      id: gemini
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: |
         python .github/scripts/code_review.py
-      continue-on-error: true
 
-    - name: Upload Gemini Review Result
-      id: review_result
-      run: |
-        if [ ! -f review_output.txt ]; then echo "未生成审查结果" > review_output.txt; fi
-        printf "REVIEW_RESULT<<EOF\n%s\nEOF\n" "$(cat review_output.txt)" >> $GITHUB_OUTPUT
-
-    - name: Post Gemini Review Comment
+    - name: 💬 添加 Gemini Inline 行评论
       uses: actions/github-script@v6
-      env:
-        GEMINI_REVIEW_RESULT: ${{ steps.review_result.outputs.REVIEW_RESULT }}
       with:
         script: |
-          const body = JSON.stringify(process.env.GEMINI_REVIEW_RESULT || "无内容");
-          const parsed = JSON.parse(body);
-          if (context.payload.pull_request) {
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
-              body: parsed
-            });
-          } else {
-            console.log("⚠️ 不是 PR 上下文，跳过评论");
+          const fs = require("fs");
+          const comments = JSON.parse(fs.readFileSync("inline_comments.json", "utf8"));
+          const prNumber = context.payload.pull_request.number;
+          const headSha = context.payload.pull_request.head.sha;
+
+          for (const comment of comments) {
+            try {
+              await github.rest.pulls.createReviewComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                commit_id: headSha,
+                path: comment.path,
+                position: comment.position,
+                body: comment.body
+              });
+            } catch (e) {
+              console.log("❌ 评论失败:", comment.path, comment.position, e.message);
+            }
           }
+
+    - name: 📝 添加 PR 顶部总结评论
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require("fs");
+          const body = fs.readFileSync("review_output.txt", "utf8");
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.payload.pull_request.number,
+            body
+          });

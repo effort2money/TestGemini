@@ -5,6 +5,7 @@ import os
 import sys
 import json
 import time
+import re
 import requests
 
 API_KEY = os.getenv("GEMINI_API_KEY")
@@ -18,62 +19,58 @@ GENERATE_URL = (
     f"?key={API_KEY}"
 )
 
-LISTMODELS_URL = f"https://generativelanguage.googleapis.com/v1/models?key={API_KEY}"
-
 def load_diff():
     try:
         content = open("diff.txt", "r", encoding="utf-8").read()
-        print("🧾 diff.txt 内容预览:\n", content[:500])  # 最多打印前 500 字符
+        print("🧾 diff.txt 内容预览:\n", content[:500])
         return content
     except FileNotFoundError:
         print("⚠️ Warning: diff.txt not found — 跳过审核（默认通过）")
         return ""
 
-def ensure_model_available():
-    try:
-        resp = requests.get(LISTMODELS_URL)
-        resp.raise_for_status()
-        obj = resp.json()
-        if "models" in obj:
-            names = [m["name"].split("/")[-1] for m in obj["models"]]
-            if MODEL_ID not in names:
-                print(f"❌ Error: 模型 {MODEL_ID} 不在 ListModels 返回列表中。")
-                print("✅ 可用模型包括：", ", ".join(names[:10]), "...")
-                sys.exit(1)
-        else:
-            print("⚠️ 无 models 字段，ListModels 返回异常内容。")
-    except Exception as e:
-        print("❌ 调用 ListModels 接口失败：", e)
-        print("📝 响应内容：", resp.text if 'resp' in locals() else "")
-        sys.exit(1)
-
 def review_code(diff_text: str) -> str:
     prompt = f"""
-你是一位高级代码审查员。请评估以下 Git diff 中的代码变更，并指出是否包含 **致命错误**（如：安全漏洞、数据丢失、无限循环、SQL 注入、权限问题等）。
+你是一个专业的 AI 代码审查助手，请对以下 Git diff 进行分析并使用 **Markdown 格式** 输出结构化审查结果。
 
-如果发现致命错误，请按以下格式回复：
-```
-FATAL: 存在致命错误
-原因: xxxxx
-建议: xxxxx
-```
+请包含三部分（必须使用如下标题）：
 
-如果仅有轻微问题或均可接受，请回复：
-```
-OK: 无致命错误
-建议: xxxxx
-```
+---
 
-以下是代码差异：
+### 📌 代码变更摘要
+简要说明本次 diff 中代码的新增、修改或删除内容。
+
+### 🛡 审查结论（结构化）
+- 如果发现致命错误，请输出：
+  ```
+  FATAL: 存在致命错误
+  原因: xxx
+  建议: xxx
+  ```
+- 如果没有致命错误，请输出：
+  ```
+  OK: 无致命错误
+  建议: xxx
+  ```
+
+### 💡 分文件建议列表（可定位）
+请使用如下结构化格式，按文件分组：
+
+- 文件: src/example.cpp
+  - 行号: 42
+    - 问题: 使用未初始化变量
+    - 建议: 将变量初始化为默认值以避免 UB
+
+---
+
+以下是 Git diff 内容：
 ```diff
 {diff_text}
 ```
 """
+
     body = {
         "model": MODEL_ID,
-        "contents": [
-            {"role": "user", "parts": [{"text": prompt.strip()}]}
-        ],
+        "contents": [{"role": "user", "parts": [{"text": prompt.strip()}]}],
         "generationConfig": {
             "candidateCount": 1,
             "temperature": 0.2,
@@ -97,16 +94,59 @@ OK: 无致命错误
     print("🔍 Gemini Raw Response:\n", json.dumps(data, indent=2, ensure_ascii=False))
 
     if "candidates" not in data or not data["candidates"]:
-        print("❌ 未在响应中找到 candidates 字段，内容：", data)
+        print("❌ 未在响应中找到 candidates 字段")
         sys.exit(1)
 
-    candidate = data["candidates"][0]
-    parts = candidate.get("content", {}).get("parts", [])
+    content = data["candidates"][0].get("content", {})
+    parts = content.get("parts", [])
     if not parts:
-        print("❌ 响应结构异常，parts 列表为空")
+        print("❌ 响应结构异常，parts 为空")
         sys.exit(1)
 
     return parts[0].get("text", "")
+
+def extract_inline_comments(gemini_output: str):
+    comments = []
+    file_pattern = re.compile(r'- 文件: (.+)')
+    line_pattern = re.compile(r'- 行号: (\d+).*')
+    problem_pattern = re.compile(r'- 问题: (.+)')
+    suggestion_pattern = re.compile(r'- 建议: (.+)')
+
+    current_file = None
+    current_line = None
+    current_problem = None
+    current_suggestion = None
+
+    for line in gemini_output.splitlines():
+        file_match = file_pattern.match(line)
+        if file_match:
+            current_file = file_match.group(1)
+            continue
+
+        line_match = line_pattern.match(line)
+        if line_match:
+            current_line = int(line_match.group(1))
+            continue
+
+        problem_match = problem_pattern.match(line)
+        if problem_match:
+            current_problem = problem_match.group(1)
+            continue
+
+        suggestion_match = suggestion_pattern.match(line)
+        if suggestion_match:
+            current_suggestion = suggestion_match.group(1)
+            if current_file and current_line and current_problem and current_suggestion:
+                comments.append({
+                    "file": current_file,
+                    "line": current_line,
+                    "body": f"> ⚠️ **{current_problem}**\n> 💡 **建议**：{current_suggestion}"
+                })
+                current_line = None
+                current_problem = None
+                current_suggestion = None
+
+    return comments
 
 def main():
     diff = load_diff()
@@ -117,14 +157,20 @@ def main():
         result = review_code(diff)
 
     print("📝 Gemini Review Result:\n", result)
+
     with open("review_output.txt", "w", encoding="utf-8") as f:
         f.write(result)
 
-    if "FATAL" in result.splitlines()[0]:
+    inline_comments = extract_inline_comments(result)
+    with open("inline_comments.json", "w", encoding="utf-8") as f:
+        json.dump(inline_comments, f, indent=2, ensure_ascii=False)
+        print("✅ 解析出可定位评论数量:", len(inline_comments))
+
+    if result.strip().startswith("FATAL"):
         print("❌ 检测到致命错误，终止流程。")
         sys.exit(1)
     else:
         print("✅ 无致命错误，允许推送。")
-        
+
 if __name__ == "__main__":
     main()
