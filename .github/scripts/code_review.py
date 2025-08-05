@@ -163,7 +163,7 @@ def main():
     with open("review_output.txt", "w", encoding="utf-8") as f:
         f.write(result)
 
-    inline_comments = extract_inline_comments(result)
+    inline_comments = extract_inline_comments_force_all(result)
     with open("inline_comments.json", "w", encoding="utf-8") as f:
         json.dump(inline_comments, f, indent=2, ensure_ascii=False)
         print("✅ 解析出可定位评论数量:", len(inline_comments))
