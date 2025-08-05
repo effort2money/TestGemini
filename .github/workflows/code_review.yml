@@ -9,25 +9,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
+    - name: 🧾 拉取代码仓库
       uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
-    - name: Set up Python
+    - name: 🐍 安装 Python 环境
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
 
-    - name: Install dependencies
+    - name: 📦 安装依赖库
       run: pip install requests
 
-    - name: Get diff
+    - name: 🧩 获取当前 PR 的代码差异
       run: |
         git diff origin/${{ github.base_ref }}...HEAD > diff.txt || echo "" > diff.txt
-        cat diff.txt
 
-    - name: Run Gemini Code Review
+    - name: 🤖 执行 Gemini AI 代码审查
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: |
