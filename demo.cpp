@@ -126,5 +126,17 @@ int main() {
     int* danglingPointer2 = new int(400);
     delete danglingPointer2;
     cout << "Dangling pointer value 2: " << *danglingPointer2 << endl;  // ❌ 不安全：悬空指针
+
+    // ❌ 错误：使用未定义的行为
+    int* invalidPointerAccess2 = (int*)0xCAFEBABE;
+    cout << "Invalid pointer access 2: " << *invalidPointerAccess2 << endl;  // ❌ 不安全：无效指针访问
+    
+    // ❌ 错误：使用未定义的行为
+    int* invalidArrayAccess2 = arr2 + 50;
+    cout << "Invalid array access 2: " << *invalidArrayAccess2 << endl;  // ❌ 不安全：无效数组访问
+
+    // ❌ 错误：使用未定义的行为
+    int* nullPointerDereference2 = nullptr;
+    cout << "Null pointer dereference 2: " << *nullPointerDereference2 << endl;  // ❌ 不安全：空指针解引用
     return 0;
 }
