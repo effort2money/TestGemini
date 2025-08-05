@@ -67,5 +67,64 @@ int main() {
     // ❌ 错误：使用未定义的行为
     int* outOfBoundsPointer = arr2 + 10;
     cout << "Out of bounds pointer value: " << *outOfBoundsPointer << endl;  // ❌ 不安全：越界指针
+
+    // ❌ 错误：使用未定义的行为
+    int* nullPointer = nullptr;
+    cout << "Dereferencing null pointer: " << *nullPointer << endl;  // ❌ 不安全：空指针解引用
+
+    // ❌ 错误：使用未定义的行为
+    int* danglingPointer = new int(100);
+    delete danglingPointer;
+    cout << "Dangling pointer value: " << *danglingPointer << endl;  // ❌ 不安全：悬空指针
+
+    // ❌ 错误：使用未定义的行为
+    int* invalidMemoryAccess = (int*)0xFFFFFFFF;
+    cout << "Invalid memory access: " << *invalidMemoryAccess << endl;  // ❌ 不安全：无效内存访问
+
+    // ❌ 错误：使用未定义的行为
+    int* uninitializedMemory = new int;
+    cout << "Uninitialized memory value: " << *uninitializedMemory << endl;  // ❌ 不安全：未初始化内存
+
+    // ❌ 错误：使用未定义的行为
+    int* freedMemory = new int(200);
+    delete freedMemory;
+    cout << "Freed memory value: " << *freedMemory << endl;  // ❌ 不安全：已释放内存访问
+
+    // ❌ 错误：使用未定义的行为
+    int* invalidPointerAccess = (int*)0xDEADBEEF;
+    cout << "Invalid pointer access: " << *invalidPointerAccess << endl;  // ❌ 不安全：无效指针访问                                                
+    // ❌ 错误：使用未定义的行为
+    int* invalidArrayAccess = arr2 + 20;
+    cout << "Invalid array access: " << *invalidArrayAccess << endl;  // ❌ 不安全：无效数组访问
+
+    // ❌ 错误：使用未定义的行为
+    int* nullPointerDereference = nullptr;
+    cout << "Null pointer dereference: " << *nullPointerDereference << endl;  // ❌ 不安全：空指针解引用
+
+    // ❌ 错误：使用未定义的行为
+    int* danglingPointerAccess = new int(300);
+    delete danglingPointerAccess;
+    cout << "Dangling pointer access: " << *danglingPointerAccess << endl;  // ❌ 不安全：悬空指针访问
+
+    // ❌ 错误：使用未定义的行为
+    int* invalidMemoryAccess2 = (int*)0xBADF00D;
+    cout << "Invalid memory access 2: " << *invalidMemoryAccess2 << endl;  // ❌ 不安全：无效内存访问
+
+    // ❌ 错误：使用未定义的行为
+    int* uninitializedPointer2;
+    cout << "Uninitialized pointer value 2: " << *uninitializedPointer2 << endl;  // ❌ 不安全：未初始化指针
+
+    // ❌ 错误：使用未定义的行为
+    int* outOfBoundsPointer2 = arr2 + 100;
+    cout << "Out of bounds pointer value 2: " << *outOfBoundsPointer2 << endl;  // ❌ 不安全：越界指针
+
+    // ❌ 错误：使用未定义的行为
+    int* nullPointer2 = nullptr;
+    cout << "Dereferencing null pointer 2: " << *nullPointer2 << endl;  // ❌ 不安全：空指针解引用
+
+    // ❌ 错误：使用未定义的行为
+    int* danglingPointer2 = new int(400);
+    delete danglingPointer2;
+    cout << "Dangling pointer value 2: " << *danglingPointer2 << endl;  // ❌ 不安全：悬空指针
     return 0;
 }
