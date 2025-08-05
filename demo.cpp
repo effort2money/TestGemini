@@ -35,5 +35,14 @@ int main() {
     int division = 10 / zero;  // ❌ 不安全：除以零
     cout << "Division result: " << division << endl;
 
+    // ❌ 错误：使用未初始化的变量
+    int uninitializedVar;
+    cout << "Uninitialized variable
+
+    // value: " << uninitializedVar << endl;  // ❌ 不安全：未初始化变量
+    
+    // ❌ 错误：使用空指针
+    int* nullPtr = nullptr;
+    cout << "Null pointer value: " << *nullPtr << endl;  // ❌ 不安全：解引用空指针
     return 0;
 }
