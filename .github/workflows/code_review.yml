@@ -1,9 +1,8 @@
 name: AI Code Review with Gemini Pro 2.5
 
 on:
-  push:
-    branches:
-      - '**'
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   review:
@@ -37,14 +36,6 @@ jobs:
         python .github/scripts/code_review.py
       continue-on-error: true
 
-    - name: Debug review_output.txt 内容
-      run: |
-        echo "===== review_output.txt 内容（cat） ====="
-        cat review_output.txt || echo "文件不存在"
-        echo "===== review_output.txt 内容（十六进制） ====="
-        xxd review_output.txt || echo "文件不存在"
-        echo "===== review_output.txt 结尾字符（od） ====="
-        od -c review_output.txt | tail -n 10 || echo "文件不存在"
     - name: Upload Gemini Review Result
       id: review_result
       run: |
@@ -67,10 +58,5 @@ jobs:
               body
             });
           } else {
-            github.rest.repos.createCommitComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              commit_sha: context.sha,
-              body
-            });
+           echo "未能获取 PR 信息，无法发表评论。"
           }
