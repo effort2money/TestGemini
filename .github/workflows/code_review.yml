@@ -48,13 +48,15 @@ jobs:
         GEMINI_REVIEW_RESULT: ${{ steps.review_result.outputs.REVIEW_RESULT }}
       with:
         script: |
-          const body = process.env.GEMINI_REVIEW_RESULT || "未能获取审查结果";
-          const pr = context.payload.pull_request;
-          if (pr) {
+          const body = JSON.stringify(process.env.GEMINI_REVIEW_RESULT || "无内容");
+          const parsed = JSON.parse(body);
+          if (context.payload.pull_request) {
             github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: pr.number,
-              body
+              issue_number: context.payload.pull_request.number,
+              body: parsed
             });
+          } else {
+            console.log("⚠️ 不是 PR 上下文，跳过评论");
           }
