@@ -41,9 +41,9 @@ jobs:
       run: |
         if [ ! -f review_output.txt ]; then echo "未生成审查结果" > review_output.txt; fi
         {
-          echo "REVIEW_RESULT<<__AI__"
+          echo "REVIEW_RESULT<<EOF"
           cat review_output.txt
-          echo "__AI__"
+          echo "EOF"
         } >> $GITHUB_OUTPUT
 
     - name: Post Gemini Review Comment
