@@ -57,6 +57,4 @@ jobs:
               issue_number: pr.number,
               body
             });
-          } else {
-           echo "未能获取 PR 信息，无法发表评论。"
           }
