@@ -39,11 +39,12 @@ jobs:
     - name: Upload Gemini Review Result
       id: review_result
       run: |
-          {
-            echo "REVIEW_RESULT<<EOF"
-            cat review_output.txt | sed 's/^>>/  /'
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
+        if [ ! -f review_output.txt ]; then echo "未生成审查结果" > review_output.txt; fi
+        {
+          echo "REVIEW_RESULT<<__AI__"
+          cat review_output.txt
+          echo "__AI__"
+        } >> $GITHUB_OUTPUT
 
     - name: Post Gemini Review Comment
       uses: actions/github-script@v6
