@@ -35,5 +35,37 @@ int main() {
     int division = 10 / zero;  // ❌ 不安全：除以零
     cout << "Division result: " << division << endl;
 
+    // ❌ 错误：使用未初始化的变量
+    int uninitializedVar;
+    cout << "Uninitialized variable" << uninitializedVar << endl;  // ❌ 不安全：未初始化变量
+    
+    // ❌ 错误：使用空指针
+    int* nullPtr = nullptr;
+    cout << "Dereferencing null pointer: " << *nullPtr << endl;  // ❌ 不安全：空指针解引用
+
+    // ❌ 错误：使用未定义的行为
+    int* undefinedPtr;
+    cout << "Undefined pointer value: " << *undefinedPtr << endl;  // ❌ 不安全：未定义行为
+    
+    // ❌ 错误：数组越界访问
+    int arr2[5] = {1, 2, 3, 4, 5};
+    cout << "Out of bounds access: " << arr2[10] << endl;  // ❌ 不安全：数组越界
+
+    // ❌ 错误：使用已释放的内存
+    int* danglingPtr = new int(42);
+    delete danglingPtr;
+    cout << "Dangling pointer value: " << *danglingPtr << endl;  // ❌ 不安全：悬空指针
+    
+    // ❌ 错误：使用未定义的行为
+    int* uninitializedPointer;
+    cout << "Uninitialized pointer value: " << *uninitializedPointer << endl;  // ❌ 不安全：未初始化指针
+
+    // ❌ 错误：使用未定义的行为
+    int* invalidPointer = (int*)0x12345678;
+    cout << "Invalid pointer value: " << *invalidPointer << endl;  // ❌ 不安全：无效指针
+    
+    // ❌ 错误：使用未定义的行为
+    int* outOfBoundsPointer = arr2 + 10;
+    cout << "Out of bounds pointer value: " << *outOfBoundsPointer << endl;  // ❌ 不安全：越界指针
     return 0;
 }
