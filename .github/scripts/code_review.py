@@ -105,46 +105,48 @@ def review_code(diff_text: str) -> str:
 
     return parts[0].get("text", "")
 
-def extract_inline_comments(gemini_output: str):
-    comments = []
-    file_pattern = re.compile(r'- 文件: (.+)')
-    line_pattern = re.compile(r'- 行号: (\d+).*')
-    problem_pattern = re.compile(r'- 问题: (.+)')
-    suggestion_pattern = re.compile(r'- 建议: (.+)')
+import re
 
+def extract_inline_comments_force_all(text: str):
+    import re
+
+    comments = []
     current_file = None
     current_line = None
     current_problem = None
     current_suggestion = None
 
-    for line in gemini_output.splitlines():
-        file_match = file_pattern.match(line)
-        if file_match:
-            current_file = file_match.group(1)
+    lines = text.splitlines()
+    for line in lines:
+        line = line.strip()
+
+        if not line:
             continue
 
-        line_match = line_pattern.match(line)
-        if line_match:
-            current_line = int(line_match.group(1))
-            continue
+        if line.startswith("- 文件:"):
+            current_file = re.sub(r"- 文件:\s*`?(.*?)`?$", r"\1", line).strip()
 
-        problem_match = problem_pattern.match(line)
-        if problem_match:
-            current_problem = problem_match.group(1)
-            continue
+        elif line.startswith("- 行号:"):
+            try:
+                current_line = int(line.split(":", 1)[1].strip())
+            except:
+                continue
 
-        suggestion_match = suggestion_pattern.match(line)
-        if suggestion_match:
-            current_suggestion = suggestion_match.group(1)
-            if current_file and current_line and current_problem and current_suggestion:
-                comments.append({
-                    "file": current_file,
-                    "line": current_line,
-                    "body": f"> ⚠️ **{current_problem}**\n> 💡 **建议**：{current_suggestion}"
-                })
-                current_line = None
-                current_problem = None
-                current_suggestion = None
+        elif line.startswith("- 问题:"):
+            current_problem = line.split(":", 1)[1].strip()
+
+        elif line.startswith("- 建议:"):
+            current_suggestion = line.split(":", 1)[1].strip()
+
+        if current_file and current_line and current_problem and current_suggestion:
+            comments.append({
+                "file": current_file,
+                "line": current_line,
+                "body": f"> ⚠️ **{current_problem}**\n> 💡 **建议**：{current_suggestion}"
+            })
+            current_line = None
+            current_problem = None
+            current_suggestion = None  # ⬅️ 注意：不重置文件名，允许多条出现在同一文件
 
     return comments
 
