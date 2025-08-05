@@ -138,5 +138,18 @@ int main() {
     // ❌ 错误：使用未定义的行为
     int* nullPointerDereference2 = nullptr;
     cout << "Null pointer dereference 2: " << *nullPointerDereference2 << endl;  // ❌ 不安全：空指针解引用
+
+    // ❌ 错误：使用未定义的行为
+    int* danglingPointerAccess2 = new int(500);
+    delete danglingPointerAccess2;
+    cout << "Dangling pointer access 2: " << *danglingPointerAccess2 << endl;  // ❌ 不安全：悬空指针访问
+
+    // ❌ 错误：使用未定义的行为
+    int* invalidMemoryAccess3 = (int*)0x12345678;
+    cout << "Invalid memory access 3: " << *invalidMemoryAccess3 << endl;  // ❌ 不安全：无效内存访问
+    
+    // ❌ 错误：使用未定义的行为
+    int* uninitializedPointer3;
+    cout << "Uninitialized pointer value 3: " << *uninitializedPointer3 << endl;  // ❌ 不安全：未初始化指针
     return 0;
 }
