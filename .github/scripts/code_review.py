@@ -150,12 +150,61 @@ def extract_inline_comments_force_all(text: str):
 
     return comments
 
+def filter_diff_code_only(text: str):
+    import re
+
+    # 默认排除扩展名（包括配置、文档、二进制等）
+    exclude_exts = [
+        ".md", ".json", ".yml", ".yaml", ".lock", ".txt", ".csv", ".mdx", ".xml", ".map",
+        ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico", ".pdf", ".exe", ".dll", ".so",
+        ".bin", ".zip", ".jar", ".class", ".mod", ".sum"
+    ]
+
+    # 默认排除路径前缀（多语言构建/依赖目录）
+    exclude_dirs = [
+        "node_modules/", "vendor/", "build/", "target/", ".venv/", "env/", "__pycache__/"
+    ]
+
+    filtered = []
+    include_block = False
+    current_filename = None
+
+    for line in text.splitlines():
+        # 检测 diff block 开始
+        if line.startswith("diff --git"):
+            match = re.match(r"diff --git a/(.+?) b/(.+)", line)
+            if match:
+                file_path = match.group(1)
+                current_filename = file_path
+
+                excluded = (
+                    any(current_filename.endswith(ext) for ext in exclude_exts) or
+                    any(current_filename.startswith(d) for d in exclude_dirs)
+                )
+
+                include_block = not excluded
+
+            if include_block:
+                filtered.append(line)
+            continue
+
+        # 跳过二进制 diff
+        if "Binary files" in line and "differ" in line:
+            include_block = False
+            continue
+
+        if include_block:
+            filtered.append(line)
+
+    return "\n".join(filtered)
+
 def main():
     diff = load_diff()
     if not diff.strip():
         print("📭 diff.txt is empty. Skipping review.")
         result = "OK: 无致命错误\n建议: 没有检测到任何变更，跳过审查。"
     else:
+        diff = filter_diff_code_only(diff)
         result = review_code(diff)
 
     print("📝 Gemini Review Result:\n", result)
