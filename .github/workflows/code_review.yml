@@ -40,11 +40,8 @@ jobs:
       id: review_result
       run: |
         if [ ! -f review_output.txt ]; then echo "未生成审查结果" > review_output.txt; fi
-        {
-          echo "REVIEW_RESULT<<EOF"
-          cat review_output.txt
-          echo "EOF"
-        } >> $GITHUB_OUTPUT
+        REVIEW_RESULT="$(cat review_output.txt)"
+        echo "REVIEW_RESULT=${REVIEW_RESULT}" >> $GITHUB_OUTPUT
 
     - name: Post Gemini Review Comment
       uses: actions/github-script@v6
